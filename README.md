@@ -2,7 +2,9 @@
 
 A Claude Skill that turns any codebase into something deployable with `docker compose up` and shippable through CI/CD. Hardened by default, generated in one pass.
 
-Built by [Muhammad Sudais Khalid](https://sudaiskhalid.com).
+[![Listed on ClaudePluginHub](https://www.claudepluginhub.com/badge/sudais-khalid-vibe-ship)](https://www.claudepluginhub.com/plugins/sudais-khalid-vibe-ship?ref=badge)
+
+Built by [Sudais Khalid](https://sudaiskhalid.com).
 
 ## What it does
 

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "vibe-ship",
+  "displayName": "vibe-ship",
+  "version": "1.0.0",
+  "description": "Generates a complete production-ready deployment setup (Docker, CI/CD, security, scalability) for any app in one pass, and audits existing setups with a static scoring script.",
+  "author": {
+    "name": "Sudais Khalid",
+    "url": "https://sudaiskhalid.com"
+  },
+  "homepage": "https://github.com/sudais-khalid/vibe-ship",
+  "repository": "https://github.com/sudais-khalid/vibe-ship",
+  "license": "MIT",
+  "keywords": ["docker", "deployment", "ci-cd", "devops", "kubernetes", "security"]
+}
