@@ -1,0 +1,4 @@
+Django==5.2
+gunicorn
+psycopg[binary]
+

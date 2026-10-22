@@ -1,93 +1,177 @@
 ---
 name: vibe-ship
-description: Generates a complete, production-ready deployment setup for any app in one pass -- Dockerfile, docker-compose.yml, .dockerignore, CI/CD (GitHub Actions), scalability config (health checks, resource limits, K8s on request), and security hardening (non-root user, secrets, dependency scanning). Auto-detects the stack from repo files (package.json, requirements.txt, go.mod, pom.xml, Gemfile, etc.) and writes real working files, not just advice. Also audits an EXISTING Dockerfile/compose/CI setup with a static scoring script and reports concrete findings. Use whenever the user asks to "dockerize", "containerize", "make this deployable", "production-ready", "vibe ship this", "add CI/CD", "set up deployment", "ship this app", requests a Dockerfile/docker-compose/GitHub Actions workflow, or wants a deployment setup reviewed -- even for just one piece (e.g. "add a Dockerfile"), since the full set is interdependent.
+description: Generates and audits production-ready deployment setups for any app. Detects the stack from the repo (Node/Next.js/Bun/Deno, Python/Django/FastAPI, Go, Rust, Java/Spring, .NET, Ruby/Rails, PHP/Laravel, Elixir/Phoenix, static sites, monorepos) and writes hardened Dockerfiles, .dockerignore, compose.yaml with databases/caches/queues, .env.example, GitHub Actions or GitLab CI (test, build, scan, SBOM, signing, deploy), Kubernetes manifests, and configs for Fly.io, Render, Railway, Cloud Run, AWS, Azure, VPS+Caddy or Kamal. Verifies output with a 90+ rule static auditor (score, SARIF, CI exit codes) and real docker builds. Use when the user says "dockerize", "containerize", "deploy this", "production-ready", "vibe ship this", "add CI/CD", "write a Dockerfile/docker-compose", "deploy to Fly/Render/Cloud Run/ECS/Kubernetes/a VPS", or wants an existing Dockerfile, compose file, pipeline or K8s manifest reviewed, audited or fixed, even for one file.
 ---
 
 # vibe-ship
 
-Turns any codebase into something that can be deployed with `docker compose up` and shipped through CI/CD with sane, hardened defaults - all generated in one pass, tailored to the actual project. You bring the vibe; this brings the infrastructure.
+Turns any codebase into something you can ship: hardened containers, a wired-up stack, a CI/CD pipeline, and the target platform's config. Every claim is backed by detection output, the audit score, and (when Docker is available) a real build and health check.
 
-## Two modes
+Scripts live in this skill's `scripts/` directory. They are standard-library Python 3.8+ with no installs. Invoke them as `python3 <skill-dir>/scripts/<name>.py`, or with `python` / `py -3` on Windows.
 
-1. **Generate** (default) - no deployment files exist yet, or the user wants a fresh setup. Walk through the workflow below.
-2. **Audit** - deployment files already exist and the user wants them reviewed/scored rather than replaced. Skip straight to "Audit an existing setup" below.
+| Script | Purpose |
+|---|---|
+| `detect.py --path <repo> --json` | Evidence: services, stack, versions, ports, entrypoints, backing services, env vars, existing deploy files |
+| `audit.py --path <repo>` | 90+ rules across Dockerfile, .dockerignore, Compose, GitHub Actions, GitLab CI, Kubernetes. Score, grade, `--format sarif\|json\|markdown`, `--fail-on high` |
+| `pin_actions.py .github/workflows` | Pins every `uses:` to a commit SHA (`# vX.Y.Z` comment kept) via `git ls-remote` |
 
----
+## Pick the mode
 
-## Generate: Workflow
+| The user wants... | Mode |
+|---|---|
+| deployment files that don't exist yet | **Generate** |
+| an opinion on existing files ("review", "audit", "is this secure", "score my Dockerfile") | **Audit** |
+| existing files improved ("fix", "harden", "make this production-ready" when files exist) | **Fix** (Audit, then apply) |
+| to go live on a specific platform | **Target** (Generate or reuse the image, then add the platform layer) |
 
-### 1. Detect the stack
-
-Look for these signal files in the project root (and one level into common subfolders like `backend/`, `server/`, `api/`):
-
-| File found | Stack | Default port | Start command |
-|---|---|---|---|
-| `package.json` | Node.js | 3000 | read `scripts.start` |
-| `requirements.txt` / `pyproject.toml` | Python | 8000 | detect Flask/FastAPI/Django |
-| `go.mod` | Go | 8080 | `go build` |
-| `pom.xml` / `build.gradle` | Java/Kotlin (JVM) | 8080 | detect Spring Boot / Gradle app |
-| `Gemfile` | Ruby | 3000 | detect Rails/Sinatra |
-| `Cargo.toml` | Rust | 8080 | `cargo build --release` |
-| `composer.json` | PHP | 8000 | detect Laravel/Symfony |
-
-If multiple signal files exist (e.g. a `frontend/` and `backend/` folder), treat it as a **multi-service app** - generate one Dockerfile per service plus a docker-compose.yml that wires them together.
-
-If you can't confidently detect a stack, ask the user rather than guessing - a wrong Dockerfile base image is worse than no Dockerfile.
-
-Also detect:
-- **Package manager** (npm vs yarn vs pnpm, pip vs poetry vs uv) from lockfiles present.
-- **Database/cache dependencies** (look for `pg`, `mongoose`, `redis`, `sqlalchemy`, etc. in dependency files) - these become services in docker-compose.yml.
-- **Existing `.env` or `.env.example`** - never overwrite; read it to learn what env vars the app expects.
-- **Existing Dockerfile/CI config** - if present, offer Audit mode instead of silently overwriting.
-
-### 2. Read the relevant stack reference
-
-Before writing the Dockerfile, read `references/docker-patterns.md` and jump to the section matching the detected stack. It has copy-ready multi-stage Dockerfile templates per language - adapt to the project's actual entry point, build command, and dependencies rather than pasting blind.
-
-Also skim `references/anti-patterns.md` so the generated files avoid the common mistakes listed there by construction.
-
-### 3. Generate the files
-
-Write these into the project (paths relative to repo root unless multi-service):
-
-1. **`Dockerfile`** - multi-stage build (build stage + slim runtime stage), non-root user, `HEALTHCHECK` instruction, pinned base image version.
-2. **`.dockerignore`** - excludes `node_modules`, `.git`, `.env`, build artifacts, test files, etc. per stack.
-3. **`docker-compose.yml`** - the app service plus any detected dependent services (postgres, redis, etc.) with named volumes, resource limits, a shared network, env vars from `.env`.
-4. **`.env.example`** - every env var the app reads, with placeholder values and a comment on what each is for. Never put real secrets here.
-5. **`.github/workflows/ci-cd.yml`** - see `references/cicd-patterns.md`. At minimum: install deps → lint → test → build Docker image → (on main branch) push to a registry, plus a dependency vulnerability scan step. Ask which registry (Docker Hub / GHCR / ECR / GCR) before filling in the push step - default to GHCR since it needs no extra secrets beyond `GITHUB_TOKEN`.
-6. **`DEPLOYMENT.md`** - a short doc at the project root summarizing what was generated, how to run it locally (`docker compose up`), how CI/CD triggers, and a checklist of anything the user still needs to do manually.
-
-For scalability and security specifics, read `references/scalability-checklist.md` and `references/security-checklist.md` before finalizing the Dockerfile and compose file - apply every relevant item, and note anything needing manual follow-up in `DEPLOYMENT.md` rather than silently skipping it.
-
-If the user mentions Kubernetes, a specific cloud provider, or says Compose alone isn't enough, read `references/kubernetes.md` and generate manifests there instead of (or alongside) docker-compose.yml.
-
-### 4. Run the audit script on what you just generated
-
-Run `scripts/audit.py` against the generated Dockerfile/compose/CI files as a final sanity pass (see next section for usage). Fix anything it flags before presenting to the user - it should score clean on your own output.
-
-### 5. Summarize, don't dump
-
-Don't paste all file contents into the chat. Give a short summary: what was created, what stack was detected, what services are wired up, the audit score, and point to `DEPLOYMENT.md` for details. Offer to walk through any specific file if the user wants to review it.
+If `detect.py` reports existing Dockerfile/compose/CI and the user didn't explicitly ask to regenerate, use Audit or Fix. **Never overwrite an existing deployment file without saying so first.**
 
 ---
 
-## Audit: Reviewing an existing setup
+## Generate
 
-When the user already has a Dockerfile, docker-compose.yml, or CI config and wants it reviewed rather than replaced:
+### 1. Detect (evidence, not guesses)
 
 ```bash
-python3 scripts/audit.py --path /path/to/project
+python3 <skill-dir>/scripts/detect.py --path . --json
 ```
 
-This statically scans for the Dockerfile, docker-compose.yml, and `.github/workflows/*.yml` under the given path and checks each against the same rules in `references/security-checklist.md`, `references/scalability-checklist.md`, and `references/anti-patterns.md` - no Docker daemon or network access needed, pure text analysis. It prints a scored report (CRITICAL/HIGH/MEDIUM/LOW findings) with file:line references and a fix suggestion per finding.
+Read the result before anything else:
+- `services[]` are what gets a Dockerfile. `packages[]` are libraries and workspace roots that don't.
+- Per service: `language`, `framework`, `kind` (web/worker/static), `package_manager` + `lockfile`, `runtime_version` + `version_source`, `port`, `entrypoint`, `build_cmd`, `health_path`, `backing_services`, `workers`, `migrations`, `env_vars`, `notes`.
+- `monorepo`: build with the repo root as context.
+- `existing`: deployment files already present. `git.image_ref` is the GHCR image name.
+- `warnings`: each one becomes either a question to the user or a DEPLOYMENT.md item.
 
-Walk through the findings with the user, prioritizing CRITICAL/HIGH first (things like running as root, `:latest` tags, secrets in `ARG`/`ENV`, missing `.dockerignore`). Offer to fix them directly rather than just listing them.
+If `services` is empty, or a framework/entrypoint is missing for a web service, **ask**. A wrong base image or start command is worse than none. If `detect.py` can't run, inspect the manifests by hand using the same checklist.
+
+### 2. Decide the target (one short question at most)
+
+The defaults need no question: **Docker Compose for local and single-server, GitHub Actions, and GHCR.** Ask only when the answer changes files and the user didn't say:
+- **Where will it run?** VPS (Compose + Caddy, or Kamal), Fly.io, Render, Railway, Heroku, DigitalOcean, Cloud Run, AWS App Runner/ECS, Azure Container Apps, or Kubernetes.
+- **Registry**, only if not GHCR, and **GitLab CI** if `.gitlab-ci.yml` exists or the remote is GitLab.
+
+In a non-interactive context, use the defaults and state them in the summary.
+
+### 3. Load only the references you need
+
+| Need | Read |
+|---|---|
+| Dockerfile for each service | `references/stacks/<runtime>.md`: `node` (Node/Bun/Deno), `python`, `go`, `rust`, `jvm`, `dotnet`, `ruby`, `php`, `elixir` (BEAM/Gleam), `static` (SPA/SSG), `other` (Swift/Dart/Haskell/Crystal/Zig/C++/...) |
+| Versions when the project declares none | `references/versions.md` |
+| Postgres/MySQL/Mongo/Redis/RabbitMQ/Kafka/Elastic/... in compose | `references/services.md` |
+| TLS, reverse proxy, app-server tuning, signals, trusted proxies | `references/servers.md` |
+| Platform config + deploy job | `references/deploy-targets.md` |
+| Pipelines (GitHub, GitLab, others) + Dependabot | `references/cicd-patterns.md` |
+| Kubernetes / Helm / Kustomize | `references/kubernetes.md` |
+| Final review | `references/security-checklist.md`, `references/scalability-checklist.md`, `references/anti-patterns.md` |
+
+The templates are verified starting points. Adapt them to the detected entrypoint, port, package manager, and versions, and delete lines that don't apply (an asset stage with no frontend, a `public/` copy when there's no `public/`).
+
+### 4. Write the files
+
+| File | Contents |
+|---|---|
+| `Dockerfile` (one per service; monorepo: `apps/<svc>/Dockerfile`) | Multi-stage, pinned base, cache mounts, non-root, exec-form CMD, HEALTHCHECK with a tool that **exists in the final image** |
+| `.dockerignore` | Stack baseline + `.git`, `.env*` (`!.env.example`), build output |
+| `compose.yaml` | App + workers + detected backing services from `services.md`, healthchecks, `depends_on: condition: service_healthy`, one-off `migrate` service, named volumes, limits, restart, log rotation, no DB ports published |
+| `compose.override.yaml` (optional) | Dev-only: source bind mounts, DB ports on `127.0.0.1`, dev command |
+| `.env.example` | Every var in `env_vars` + compose interpolations, placeholders and a comment each |
+| `.gitignore` | Add `.env`, `.env.*`, `!.env.example` if missing (append, never rewrite) |
+| `.github/workflows/ci-cd.yml` | From `cicd-patterns.md`: test → image (scan, SBOM, provenance, sign) → deploy (if a target was named) |
+| `.github/dependabot.yml` | actions + docker + docker-compose + the app's ecosystem, unless Renovate exists |
+| Target config | `fly.toml`, `render.yaml`, `railway.json`, `heroku.yml`, `.do/app.yaml`, `config/deploy.yml`, `Caddyfile`, ECS task def, `k8s/`... as chosen |
+| `DEPLOYMENT.md` | See "DEPLOYMENT.md contract" below |
+
+Rules while writing:
+- **Respect what the repo declares:** runtime version, package manager, lockfile, start script, port. Declared beats default.
+- **Prefer the framework's own generator output** when present (Rails ≥ 7.1 Dockerfile, `mix phx.gen.release --docker`, Vapor's template). Audit and harden it rather than replacing it.
+- **Don't change application code** (health routes, `0.0.0.0` binding, trusted proxies, `output: "standalone"`) without asking. Offer the exact change and put it in DEPLOYMENT.md.
+- **No secrets anywhere** except `.env` (gitignored) and the platform/CI secret stores. Use `${VAR:?message}` for required compose secrets.
+
+### 5. Harden the pipeline
+
+```bash
+python3 <skill-dir>/scripts/pin_actions.py .github/workflows
+```
+
+If there's no network, leave the tags in place and add "run pin_actions.py" to the DEPLOYMENT.md checklist.
+
+### 6. Verify (required)
+
+```bash
+python3 <skill-dir>/scripts/audit.py --path . --fail-on medium
+```
+
+Fix every CRITICAL/HIGH/MEDIUM in your own output and re-run until it exits 0. Remaining LOW/INFO must be fixed or justified with an inline `# vibe-ship: ignore VS-XXXX <reason>`.
+
+Then climb `references/verification.md` as far as the environment allows: `docker compose config`, `docker build`, `docker compose up --wait`, curl the health path, check the UID, and clean up. In an interactive session, ask once before pulling images or starting containers, unless the user already asked you to test it. Report the highest rung reached, honestly.
+
+### 7. Summarize, don't dump
+
+Reply in under 15 lines:
+- the stack detected per service
+- the files created or changed
+- the services wired up
+- the audit score and grade
+- the verification rung reached (for example "built and healthy in 41s, image 128 MB, UID 10001")
+- the app changes you recommend but didn't make
+- a pointer to DEPLOYMENT.md
+
+Don't paste the file contents. Offer to walk through any file.
+
+---
+
+## Audit
+
+```bash
+python3 <skill-dir>/scripts/audit.py --path <repo-or-file>                 # human report
+python3 <skill-dir>/scripts/audit.py --path . --format markdown            # for PR comments / docs
+python3 <skill-dir>/scripts/audit.py --path . --format sarif > vibe-ship.sarif   # GitHub code scanning
+python3 <skill-dir>/scripts/audit.py --path . --fail-on high               # CI gate (exit 1)
+python3 <skill-dir>/scripts/audit.py --list-rules                          # full rule catalog
+```
+
+It's a static scan: no Docker daemon or network, nothing executed. It parses Dockerfiles properly (continuations, heredocs, multi-stage inheritance), reads YAML by key path, and checks things generic linters miss:
+- a HEALTHCHECK calling `curl` on a slim image that has no curl
+- Postgres 18 volumes mounted at the old data dir
+- `pull_request_target` "pwn requests" and script injection in workflows
+- secrets in env or layers
+- dev servers used as production commands
+- K8s pod security
+
+Present results:
+1. Score and grade, plus a one-line verdict.
+2. CRITICAL and HIGH findings first, each with `file:line`, why it matters in one sentence, and the concrete fix.
+3. Group the MEDIUM/LOW findings and don't list INFO unless asked.
+4. Offer to apply the fixes (that's Fix mode). Don't just list them.
+
+For Helm charts, render first (`helm template`). Templated files are skipped and reported as such.
+
+## Fix
+
+Run Audit and apply fixes highest severity first, editing the existing files in place and keeping the user's structure and comments. Re-run the audit after each batch. When a fix changes behaviour (non-root user needing writable dirs, removing a published DB port, pinning a version), say what changed and why. Finish with before/after score and grade.
+
+## Target
+
+When an image setup already exists and the user wants it live somewhere, read `references/deploy-targets.md` for that platform. Write its config, add the deploy job (gated on main + tests, with `environment:` and `concurrency:`), and list the exact secrets and one-time setup commands in DEPLOYMENT.md.
+
+---
+
+## DEPLOYMENT.md contract
+
+Short, scannable, specific to this repo:
+1. **What was generated:** a table of each file and its purpose.
+2. **Run locally:** `cp .env.example .env`, then `docker compose up --build`, then the URL and health URL.
+3. **How CI/CD works:** triggers, what's gated, image tags (`sha-<commit>`, semver, `latest`), where findings show up.
+4. **Deploy:** target-specific steps, the secrets to create (exact names), one-time setup.
+5. **You still need to:** every warning, skipped step, and recommended app change, as checkboxes.
+6. **Audit:** score and grade at handover, plus how to re-run it.
 
 ## Principles
 
-- **Real files, not essays.** Working artifacts the user can run, not a markdown lecture.
-- **Multi-stage builds always.** Never ship build tools or dev dependencies in the final image.
-- **Non-root by default.** Every Dockerfile creates and switches to an unprivileged user before `CMD`.
-- **Never hardcode secrets.** Anything sensitive goes through env vars / `.env` (gitignored) with `.env.example` as the documented template.
-- **Don't clobber existing config.** If deployment files already exist, offer Audit mode instead of overwriting.
-- **Scale defaults, not over-engineering.** Health checks and resource limits by default; Kubernetes/Terraform/autoscaling only on request or when the project clearly needs it.
+- **Evidence over assumptions.** Detection output and audit results drive the files, and you ask when evidence is missing.
+- **Verified, not plausible.** Nothing is "production-ready" until it passes the audit, and ideally a real build and health check.
+- **Secure by default, practical by design.** Non-root, pinned, scanned, least privilege, plus the inline suppression with a reason when a rule genuinely doesn't apply.
+- **Right-sized.** Compose and a PaaS by default. Kubernetes, IaC, autoscaling, and multi-region only on request or clear need.
+- **Never clobber.** Existing files get audited and fixed in place. App code changes are offered, not imposed.

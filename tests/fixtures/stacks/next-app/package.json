@@ -1,0 +1,1 @@
+{"name":"web","scripts":{"build":"next build","start":"next start","dev":"next dev"},"dependencies":{"next":"15.5.0","react":"19.0.0","@prisma/client":"6.0.0"},"devDependencies":{"prisma":"6.0.0","typescript":"5.6.0"},"engines":{"node":">=22.11"}}

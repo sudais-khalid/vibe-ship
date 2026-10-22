@@ -1,7 +1,7 @@
 {
   "name": "vibe-ship",
-  "version": "1.0.0",
-  "description": "Generates a complete production-ready deployment setup for any app in one pass: Dockerfile, docker-compose, CI/CD pipeline, security hardening, and scalability config. Also audits existing Dockerfiles and CI setups with a static scoring script.",
+  "version": "2.0.0",
+  "description": "Dockerize and deploy any app: detects the stack (Node, Next.js, Python, Django, FastAPI, Go, Rust, Java/Spring, .NET, Rails, Laravel, Phoenix, static, monorepos), writes hardened Dockerfiles, Compose, GitHub Actions/GitLab CI, Kubernetes and Fly/Render/Railway/Cloud Run/AWS/VPS configs, then verifies them with a 93-rule auditor and real docker builds.",
   "author": {
     "name": "Sudais Khalid",
     "url": "https://sudaiskhalid.com"
@@ -9,5 +9,9 @@
   "homepage": "https://github.com/sudais-khalid/vibe-ship",
   "repository": "https://github.com/sudais-khalid/vibe-ship",
   "license": "MIT",
-  "keywords": ["docker", "ci-cd", "deployment", "devops", "security", "kubernetes"]
+  "keywords": [
+    "docker", "dockerfile", "docker-compose", "deployment", "devops", "ci-cd", "github-actions", "gitlab-ci",
+    "kubernetes", "helm", "security", "audit", "sarif", "containers", "production-ready",
+    "fly-io", "render", "railway", "cloud-run", "aws", "vps", "caddy", "nextjs", "django", "fastapi", "rails", "laravel"
+  ]
 }

@@ -1,0 +1,85 @@
+name: "vibe-ship audit"
+description: "Audit Dockerfiles, Compose, GitHub Actions, GitLab CI and Kubernetes manifests: 90+ security and reliability rules, score, SARIF."
+author: "Sudais Khalid"
+branding:
+  icon: "shield"
+  color: "purple"
+
+inputs:
+  path:
+    description: "Project root (or single file) to scan"
+    default: "."
+  fail-on:
+    description: "Fail the step at or above this severity: critical, high, medium, low, info, none"
+    default: "high"
+  ignore:
+    description: "Comma-separated rule IDs to skip (e.g. VS-D003,VS-G043)"
+    default: ""
+  exclude:
+    description: "Newline-separated globs of paths to skip"
+    default: ""
+  upload-sarif:
+    description: "Upload findings to GitHub code scanning (needs security-events: write)"
+    default: "true"
+  sarif-file:
+    description: "Where to write the SARIF report"
+    default: "vibe-ship.sarif"
+
+outputs:
+  score:
+    description: "Audit score 0-100"
+    value: ${{ steps.audit.outputs.score }}
+  grade:
+    description: "Audit grade A-F"
+    value: ${{ steps.audit.outputs.grade }}
+  sarif-file:
+    description: "Path of the SARIF report"
+    value: ${{ inputs.sarif-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: audit
+      shell: bash
+      env:
+        VS_PATH: ${{ inputs.path }}
+        VS_FAIL_ON: ${{ inputs.fail-on }}
+        VS_IGNORE: ${{ inputs.ignore }}
+        VS_EXCLUDE: ${{ inputs.exclude }}
+        VS_SARIF: ${{ inputs.sarif-file }}
+        VS_SCRIPT: ${{ github.action_path }}/scripts/audit.py
+      run: |
+        set -euo pipefail
+        args=(--path "$VS_PATH")
+        [ -n "$VS_IGNORE" ] && args+=(--ignore "$VS_IGNORE")
+        while IFS= read -r ex; do [ -n "$ex" ] && args+=(--exclude "$ex"); done <<< "$VS_EXCLUDE"
+        python3 "$VS_SCRIPT" "${args[@]}" --format sarif > "$VS_SARIF"
+        python3 "$VS_SCRIPT" "${args[@]}" --format markdown >> "$GITHUB_STEP_SUMMARY"
+        python3 "$VS_SCRIPT" "${args[@]}" --format json > vibe-ship.json
+        python3 - <<'PY' >> "$GITHUB_OUTPUT"
+        import json
+        r = json.load(open("vibe-ship.json"))
+        print("score=%s" % r["score"])
+        print("grade=%s" % r["grade"])
+        PY
+        python3 "$VS_SCRIPT" "${args[@]}"
+        rm -f vibe-ship.json
+
+    - if: inputs.upload-sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+      continue-on-error: true
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: vibe-ship
+
+    - if: inputs.fail-on != 'none'
+      shell: bash
+      env:
+        VS_PATH: ${{ inputs.path }}
+        VS_FAIL_ON: ${{ inputs.fail-on }}
+        VS_IGNORE: ${{ inputs.ignore }}
+        VS_SCRIPT: ${{ github.action_path }}/scripts/audit.py
+      run: |
+        args=(--path "$VS_PATH" --fail-on "$VS_FAIL_ON" --format json)
+        [ -n "$VS_IGNORE" ] && args+=(--ignore "$VS_IGNORE")
+        python3 "$VS_SCRIPT" "${args[@]}" > /dev/null || { echo "::error::vibe-ship audit found issues at or above '$VS_FAIL_ON'"; exit 1; }

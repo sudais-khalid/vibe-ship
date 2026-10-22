@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      hostNetwork: true
+      containers:
+        - name: app
+          image: ghcr.io/me/app:latest
+          securityContext:
+            privileged: true
+          env:
+            - name: DB_PASSWORD
+              value: "realpassword123"
+      volumes:
+        - name: host
+          hostPath:
+            path: /var/lib
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+stringData:
+  DB_PASSWORD: realpassword123

@@ -1,0 +1,32 @@
+# vibe-ship
+
+> vibe-ship is an open-source (MIT) Claude Code skill by Sudais Khalid that dockerizes and deploys any application. It detects the stack from repository files, generates hardened Dockerfiles, .dockerignore, compose.yaml with backing services, .env.example, GitHub Actions or GitLab CI pipelines (test, Trivy scan, SBOM, provenance, cosign signing, deploy), Kubernetes manifests and platform configs (Fly.io, Render, Railway, Heroku, DigitalOcean, Cloud Run, AWS App Runner/ECS, Azure Container Apps, Kamal, VPS with Caddy), then verifies them with a 93-rule static auditor and real docker builds.
+
+Install in Claude Code: `/plugin marketplace add sudais-khalid/vibe-ship` then `/plugin install vibe-ship@vibe-ship`. Then say "vibe ship this", "dockerize this app" or "audit my Dockerfile".
+
+## Docs
+
+- [README](https://github.com/sudais-khalid/vibe-ship/blob/main/README.md): overview, supported stacks, deploy targets, FAQ
+- [SKILL.md](https://github.com/sudais-khalid/vibe-ship/blob/main/SKILL.md): the workflow Claude follows
+- [Audit rules](https://github.com/sudais-khalid/vibe-ship/blob/main/references/audit-rules.md): all 93 rule IDs with severity and fix
+- [Changelog](https://github.com/sudais-khalid/vibe-ship/blob/main/CHANGELOG.md)
+
+## Tools
+
+- [detect.py](https://github.com/sudais-khalid/vibe-ship/blob/main/scripts/detect.py): deterministic stack detection (JSON)
+- [audit.py](https://github.com/sudais-khalid/vibe-ship/blob/main/scripts/audit.py): static auditor for Dockerfile, Compose, GitHub Actions, GitLab CI, Kubernetes (text/json/sarif/markdown)
+- [pin_actions.py](https://github.com/sudais-khalid/vibe-ship/blob/main/scripts/pin_actions.py): pins GitHub Actions to commit SHAs
+- [action.yml](https://github.com/sudais-khalid/vibe-ship/blob/main/action.yml): GitHub Action `sudais-khalid/vibe-ship@v2`
+
+## Stack references
+
+- [Node.js / Next.js / Bun / Deno](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/node.md)
+- [Python / Django / FastAPI / Flask](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/python.md)
+- [Go](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/go.md), [Rust](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/rust.md), [JVM / Spring Boot](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/jvm.md), [.NET](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/dotnet.md)
+- [Ruby / Rails](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/ruby.md), [PHP / Laravel](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/php.md), [Elixir / Phoenix](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/elixir.md), [Static sites](https://github.com/sudais-khalid/vibe-ship/blob/main/references/stacks/static.md)
+
+## Optional
+
+- [Deploy targets](https://github.com/sudais-khalid/vibe-ship/blob/main/references/deploy-targets.md)
+- [Kubernetes](https://github.com/sudais-khalid/vibe-ship/blob/main/references/kubernetes.md)
+- [CI/CD patterns](https://github.com/sudais-khalid/vibe-ship/blob/main/references/cicd-patterns.md)

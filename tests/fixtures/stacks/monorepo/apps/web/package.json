@@ -1,0 +1,1 @@
+{"name":"web","scripts":{"build":"next build","start":"next start"},"dependencies":{"next":"15.5.0"}}

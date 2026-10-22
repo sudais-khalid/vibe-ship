@@ -1,0 +1,1 @@
+{"name":"assets","scripts":{"build":"esbuild app.js"},"devDependencies":{"esbuild":"0.24"}}

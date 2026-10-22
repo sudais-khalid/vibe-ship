@@ -1,58 +1,29 @@
-# Scalability Checklist
+# Scalability and reliability checklist
 
-These are sane defaults to bake in automatically. Anything beyond this tier (autoscaling, IaC, multi-region) should only be added if the user explicitly asks or names a target cloud platform - don't over-engineer a side project into a Kubernetes cluster uninvited.
+Bake the first section in by default. Mention the second section as follow-ups, and implement it only when asked or when the chosen target needs it.
 
-## Bake in by default
-- [ ] `HEALTHCHECK` in every Dockerfile so orchestrators (Docker Swarm, Kubernetes, ECS, Railway, etc.) can detect unhealthy instances and restart/replace them.
-- [ ] App reads its port from an env var (e.g. `PORT`) rather than hardcoding, so it works behind any load balancer or PaaS.
-- [ ] Stateless app containers - session/state should live in the database or a cache (Redis), not in-memory or on local disk, so the app can run multiple replicas safely. If you spot in-memory session storage or local file writes for user data, flag it in `DEPLOYMENT.md` rather than silently rearchitecting.
-- [ ] docker-compose.yml sets resource limits (`mem_limit`, `cpus`) on each service as a starting point, tuned conservatively - the user should adjust based on real usage.
-- [ ] Database/cache services use named volumes so data survives container restarts.
-- [ ] Logs go to stdout/stderr (12-factor style) rather than files, so they work with any log aggregator.
+## Always
+- [ ] **Healthchecks that work in the final image.** Use a tool that exists there: busybox `wget` on alpine, a language-native check on slim, exec form on distroless (VS-D020/D021). The audit verifies this.
+- [ ] **Readiness-gated startup:** `depends_on: condition: service_healthy` for databases and caches, and `service_completed_successfully` for migrations (VS-C041).
+- [ ] **Graceful shutdown:** exec-form CMD, tini/`init: true` for Node and Python, and no package-manager wrappers (VS-D080/D082). Use `stop_grace_period` when requests are long.
+- [ ] **Resource limits** on every service: memory always. CPU limits in compose are fine, but in K8s prefer requests without CPU limits (VS-C051, K010).
+- [ ] **Runtime memory tuning** matched to the limit: JVM `MaxRAMPercentage=75`, Go `GOMEMLIMIT≈90%`, Node `--max-old-space-size≈75%` for >1 GB limits.
+- [ ] **Restart policy** `unless-stopped` (compose) or the K8s default (VS-C050).
+- [ ] **Log rotation:** json-file `max-size`/`max-file` via a shared `x-logging` anchor (VS-C052).
+- [ ] **Persistent named volumes** at the right data dir. Postgres 18+ uses `/var/lib/postgresql` (VS-C060/C061).
+- [ ] **Stateless app containers.** Flag in-memory sessions, local uploads, and SQLite with >1 replica in DEPLOYMENT.md.
+- [ ] **Migrations as a one-off step,** never in every replica's startup.
+- [ ] **12-factor config:** everything via env, the same image for every environment, logs to stdout.
+- [ ] **Immutable image tags in deploys** (`sha-<commit>`); `latest` is only a convenience pointer.
 
-## Mention as follow-ups (don't implement uninvited)
-- Horizontal autoscaling (Kubernetes HPA, ECS service autoscaling) - needs a real orchestrator target.
-- CDN in front of static assets.
-- Database read replicas / connection pooling (e.g. PgBouncer) once traffic actually warrants it.
-- Queue-based async processing for slow endpoints (e.g. background jobs via BullMQ, Celery, Sidekiq) if the app has long-running requests.
-- Infrastructure as Code (Terraform/Pulumi) if deploying to a specific cloud - ask before choosing a provider.
-
-## Example docker-compose resource limits block
-
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    env_file: .env
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-    depends_on:
-      - db
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-
-volumes:
-  db_data:
-```
+## Follow-ups (offer, don't impose)
+- [ ] **Horizontal scaling:** K8s HPA / KEDA, ECS service autoscaling, Cloud Run max instances, Fly `min_machines_running`.
+- [ ] **Connection pooling** once workers × replicas × pool approaches the DB limit (PgBouncer, RDS Proxy, Supabase pooler).
+- [ ] **Background jobs** for slow requests: BullMQ, Celery, Sidekiq, Oban, Laravel queues, or Solid Queue.
+- [ ] **CDN** for static assets and images: Cloudflare, CloudFront, Fastly.
+- [ ] **Read replicas / caching layer** when read load dominates.
+- [ ] **Multi-arch images** (amd64 + arm64) for Graviton/Ampere cost savings.
+- [ ] **Observability:** OpenTelemetry SDK + collector, `/metrics` for Prometheus, structured JSON logs, error tracking (Sentry).
+- [ ] **Backups and restore drills:** managed DB PITR, or scheduled `pg_dump` to object storage, plus a tested restore.
+- [ ] **Infrastructure as code** (Terraform/OpenTofu, Pulumi) once a cloud is chosen. Ask the provider first.
+- [ ] **Zero-downtime deploys:** K8s `maxUnavailable: 0` + readiness, compose `docker compose up -d --wait`, Kamal/Fly built-in.

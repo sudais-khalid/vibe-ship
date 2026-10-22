@@ -1,0 +1,65 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.9", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m unittest discover -s tests -v
+      - name: Bad fixture must fail the gate
+        shell: bash
+        run: |
+          if python scripts/audit.py --path tests/fixtures/bad --fail-on high > /dev/null; then
+            echo "expected a non-zero exit"; exit 1
+          fi
+      - run: python scripts/detect.py --path tests/fixtures/stacks/monorepo
+
+  action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: vs
+        uses: ./
+        with:
+          path: tests/fixtures/good
+          fail-on: medium
+          upload-sarif: "false"
+      - shell: bash
+        env:
+          SCORE: ${{ steps.vs.outputs.score }}
+          GRADE: ${{ steps.vs.outputs.grade }}
+        run: |
+          echo "score=$SCORE grade=$GRADE"
+          test "$GRADE" = "A"
+
+  dogfood:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Audit this repository's own workflows
+        run: python3 scripts/audit.py --path . --exclude "tests/*" --fail-on medium

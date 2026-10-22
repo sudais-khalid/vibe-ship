@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vibe-ship: Dockerize & deploy any app with Claude Code (Docker, CI/CD, Kubernetes)</title>
+<meta name="description" content="vibe-ship is a free, open-source Claude Code skill that detects your stack and writes hardened Dockerfiles, docker-compose, GitHub Actions, Kubernetes and Fly.io/Render/Cloud Run/AWS configs, verified by a 93-rule auditor and real Docker builds.">
+<link rel="canonical" href="https://sudais-khalid.github.io/vibe-ship/">
+<meta name="author" content="Sudais Khalid">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="vibe-ship: Dockerize & deploy any app with Claude Code">
+<meta property="og:description" content="Detects your stack, writes hardened Docker, Compose, CI/CD and Kubernetes configs, and proves they work with a 93-rule auditor and real builds.">
+<meta property="og:url" content="https://sudais-khalid.github.io/vibe-ship/">
+<meta property="og:site_name" content="vibe-ship">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#7c3aed">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237c3aed'/%3E%3Cpath d='M7 19h18l-3 6H10z' fill='white'/%3E%3Cpath d='M10 11h4v6h-4zM15 8h4v9h-4zM20 12h3v5h-3z' fill='white' opacity='.85'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://sudais-khalid.github.io/vibe-ship/#app",
+      "name": "vibe-ship",
+      "description": "Open-source Claude Code skill that detects an application's stack and generates hardened Dockerfiles, docker-compose, GitHub Actions or GitLab CI pipelines, Kubernetes manifests and cloud platform configs, verified by a 93-rule static auditor and real Docker builds.",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "DevOps / Deployment automation",
+      "operatingSystem": "Windows, macOS, Linux",
+      "softwareVersion": "2.0.0",
+      "license": "https://opensource.org/licenses/MIT",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "url": "https://sudais-khalid.github.io/vibe-ship/",
+      "downloadUrl": "https://github.com/sudais-khalid/vibe-ship",
+      "codeRepository": "https://github.com/sudais-khalid/vibe-ship",
+      "programmingLanguage": "Python",
+      "keywords": "dockerize, Dockerfile generator, docker-compose, GitHub Actions, CI/CD, Kubernetes, deployment, Claude Code skill, Dockerfile audit, SARIF",
+      "featureList": [
+        "Deterministic stack detection for Node.js, Python, Go, Rust, Java, .NET, Ruby, PHP, Elixir and static sites",
+        "Hardened multi-stage Dockerfiles with non-root users and working healthchecks",
+        "docker-compose with Postgres, MySQL, MongoDB, Redis, RabbitMQ, Kafka and Elasticsearch",
+        "GitHub Actions with Trivy scanning, SBOM, provenance and cosign signing",
+        "Kubernetes, Fly.io, Render, Railway, Cloud Run, AWS, Azure and VPS deploy configs",
+        "93-rule static auditor with SARIF output and a GitHub Action"
+      ],
+      "author": { "@id": "https://sudaiskhalid.com/#person" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://sudaiskhalid.com/#person",
+      "name": "Sudais Khalid",
+      "url": "https://sudaiskhalid.com",
+      "sameAs": ["https://github.com/sudais-khalid"]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "What is vibe-ship?",
+          "acceptedAnswer": { "@type": "Answer", "text": "vibe-ship is a free, open-source Claude Code skill that turns any codebase into a deployable application. It detects the stack, writes a hardened Dockerfile, docker-compose, CI/CD pipeline and platform config, and verifies them with a 93-rule static auditor and real Docker builds." } },
+        { "@type": "Question", "name": "Which languages and frameworks does vibe-ship support?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Node.js (Next.js, Nuxt, SvelteKit, NestJS, Express, Bun, Deno), Python (Django, FastAPI, Flask), Go, Rust, Java and Kotlin (Spring Boot, Quarkus), .NET, Ruby on Rails, PHP (Laravel, Symfony, WordPress), Elixir Phoenix, static sites and monorepos, plus Swift, Dart, Haskell, Crystal, Zig and C/C++." } },
+        { "@type": "Question", "name": "Does vibe-ship overwrite my existing Dockerfile?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. When deployment files already exist it audits and scores them, then fixes them in place with your approval. It never changes application code without asking." } },
+        { "@type": "Question", "name": "Can I use the vibe-ship auditor without Claude?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. The auditor is a dependency-free Python script (python3 scripts/audit.py --path .) and a GitHub Action (uses: sudais-khalid/vibe-ship@v2) that uploads SARIF findings to GitHub code scanning." } },
+        { "@type": "Question", "name": "Where can vibe-ship deploy?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Any VPS with Docker Compose and Caddy, Kamal, Fly.io, Render, Railway, Heroku, DigitalOcean App Platform, Google Cloud Run, AWS App Runner and ECS Fargate, Azure Container Apps, and Kubernetes (EKS, GKE, AKS, k3s)." } }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+  :root {
+    --bg: #fbfaff; --surface: #ffffff; --text: #17142b; --muted: #5b5775; --line: #e6e2f3;
+    --accent: #7c3aed; --accent-ink: #ffffff; --code-bg: #15121f; --code-text: #e9e6f5; --ok: #15803d; --bad: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e0c16; --surface: #171422; --text: #ece9f8; --muted: #a29dbd; --line: #2a2640;
+      --accent: #a78bfa; --accent-ink: #120d22; --code-bg: #1a1626; --code-text: #e9e6f5; --ok: #4ade80; --bad: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+  header.top { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; }
+  .brand { font-weight: 700; letter-spacing: -.01em; text-decoration: none; color: var(--text); font-size: 18px; }
+  nav a { margin-left: 18px; color: var(--muted); text-decoration: none; font-size: 15px; }
+  nav a:hover { color: var(--text); }
+  .hero { padding: 56px 0 40px; }
+  .eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+  h1 { font-size: clamp(32px, 5.4vw, 54px); line-height: 1.08; letter-spacing: -.025em; margin: 10px 0 18px; }
+  .lede { font-size: 19px; color: var(--muted); max-width: 720px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+  .btn { display: inline-block; padding: 11px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--line); color: var(--text); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+  pre { background: var(--code-bg); color: var(--code-text); padding: 16px 18px; border-radius: 12px; overflow-x: auto; line-height: 1.55; }
+  section { padding: 34px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 28px; letter-spacing: -.015em; margin: 0 0 14px; }
+  h3 { font-size: 18px; margin: 22px 0 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .card h3 { margin-top: 0; }
+  .card p { margin: 0; color: var(--muted); }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps li { counter-increment: s; padding-left: 44px; position: relative; margin: 14px 0; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .table { width: 100%; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .y { color: var(--ok); font-weight: 600; }
+  .n { color: var(--bad); }
+  details { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 10px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); margin: 10px 0 2px; }
+  footer { padding: 30px 0 50px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+  @media (max-width: 560px) { nav a:not(:last-child) { display: none; } .hero { padding-top: 30px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#">vibe-ship</a>
+    <nav><a href="#how">How it works</a><a href="#stacks">Stacks</a><a href="#audit">Auditor</a><a href="https://github.com/sudais-khalid/vibe-ship">GitHub</a></nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Free, open-source Claude Code skill</div>
+      <h1>Dockerize and deploy any app, verified rather than vibes.</h1>
+      <p class="lede"><strong>vibe-ship</strong> detects your stack from the repo and writes a hardened Dockerfile, docker-compose, CI/CD pipeline, and Kubernetes or cloud config. It then checks everything with a 93-rule auditor and a real Docker build before handing it over.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/sudais-khalid/vibe-ship#install">Install in Claude Code</a>
+        <a class="btn" href="https://github.com/sudais-khalid/vibe-ship">View on GitHub</a>
+      </div>
+      <pre><code>/plugin marketplace add sudais-khalid/vibe-ship
+/plugin install vibe-ship@vibe-ship
+
+# then, in any project:
+&gt; vibe ship this</code></pre>
+    </div>
+
+    <section id="what">
+      <h2>What vibe-ship generates</h2>
+      <div class="grid">
+        <div class="card"><h3>Dockerfile</h3><p>Multi-stage, pinned, cache-mounted, non-root, with a healthcheck that actually runs in the final image.</p></div>
+        <div class="card"><h3>docker-compose</h3><p>Your app plus Postgres, MySQL, MongoDB, Redis, RabbitMQ or Kafka, with readiness-gated startup, a migration job, volumes and limits.</p></div>
+        <div class="card"><h3>CI/CD pipeline</h3><p>GitHub Actions or GitLab CI: test, build, Trivy scan, SBOM, provenance, cosign signing, deploy. Actions pinned to SHAs.</p></div>
+        <div class="card"><h3>Deploy config</h3><p>Kubernetes, Fly.io, Render, Railway, Heroku, Cloud Run, AWS, Azure, Kamal, or any VPS with automatic HTTPS via Caddy.</p></div>
+      </div>
+    </section>
+
+    <section id="how">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><strong>Detect.</strong> A deterministic script reads manifests and lockfiles: framework, declared runtime version, port, entrypoint, health route, databases from real dependency names, and the env vars your code reads.</li>
+        <li><strong>Generate.</strong> Tested per-stack templates are adapted to what was detected. Existing deployment files are audited instead of overwritten.</li>
+        <li><strong>Harden.</strong> Every GitHub Action gets pinned to a commit SHA, and the auditor runs on the output until nothing at MEDIUM or above remains.</li>
+        <li><strong>Prove.</strong> With Docker available, it builds, starts, waits for healthy, curls the health endpoint, confirms a non-root UID, and cleans up.</li>
+      </ol>
+    </section>
+
+    <section id="stacks">
+      <h2>Supported stacks</h2>
+      <div class="table"><table>
+        <thead><tr><th>Language</th><th>Frameworks</th></tr></thead>
+        <tbody>
+          <tr><td>JavaScript / TypeScript</td><td>Next.js, Nuxt, SvelteKit, Remix / React Router, Astro, NestJS, Express, Fastify, Hono, Bun, Deno</td></tr>
+          <tr><td>Python</td><td>Django, FastAPI, Flask, Litestar, Streamlit, Gradio + Celery workers (uv, Poetry, pip)</td></tr>
+          <tr><td>Go / Rust</td><td>Gin, Echo, Fiber, Chi, gRPC / Axum, Actix Web, Rocket</td></tr>
+          <tr><td>Java / Kotlin</td><td>Spring Boot, Quarkus, Micronaut, Ktor (Maven, Gradle)</td></tr>
+          <tr><td>.NET</td><td>ASP.NET Core, Worker Service</td></tr>
+          <tr><td>Ruby / PHP</td><td>Rails 7/8, Sinatra / Laravel, Symfony, WordPress (FrankenPHP or nginx + php-fpm)</td></tr>
+          <tr><td>Elixir</td><td>Phoenix releases</td></tr>
+          <tr><td>Static</td><td>Vite, React, Vue, Angular, Docusaurus, Hugo, Jekyll, MkDocs</td></tr>
+          <tr><td>Monorepos</td><td>Turborepo, Nx, pnpm / Yarn / npm workspaces</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="audit">
+      <h2>A 93-rule deployment auditor you can use on its own</h2>
+      <p>Static analysis for Dockerfile, .dockerignore, Compose, GitHub Actions, GitLab CI and Kubernetes. No Docker daemon, no dependencies, with SARIF output for GitHub code scanning.</p>
+      <pre><code>python3 scripts/audit.py --path . --fail-on high
+
+[HIGH] VS-D020  Dockerfile:9
+  HEALTHCHECK uses a tool that does not exist in the final image:
+  'curl' is not installed in python:3.14-slim
+[HIGH] VS-C061  compose.yaml:14
+  Postgres 18+ volume mounted at the old /var/lib/postgresql/data path</code></pre>
+      <h3>In CI as a GitHub Action</h3>
+      <pre><code>- uses: sudais-khalid/vibe-ship@v2
+  with:
+    fail-on: high</code></pre>
+      <div class="table"><table>
+        <thead><tr><th></th><th>Typical deployment prompt</th><th>Dockerfile linter</th><th>vibe-ship</th></tr></thead>
+        <tbody>
+          <tr><td>Writes the full set of files</td><td class="n">partial</td><td class="n">no</td><td class="y">yes</td></tr>
+          <tr><td>Deterministic stack detection</td><td class="n">guesses</td><td>n/a</td><td class="y">yes</td></tr>
+          <tr><td>Checks Compose, Actions, K8s</td><td class="n">no</td><td class="n">no</td><td class="y">yes</td></tr>
+          <tr><td>Knows whether curl exists in the final image</td><td class="n">no</td><td class="n">no</td><td class="y">yes</td></tr>
+          <tr><td>Verified with real builds</td><td class="n">no</td><td class="n">no</td><td class="y">yes</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="faq">
+      <h2>FAQ</h2>
+      <details open><summary>What is vibe-ship?</summary><p>A free, open-source Claude Code skill that turns any codebase into a deployable application. It detects the stack, writes a hardened Dockerfile, docker-compose, CI/CD pipeline and platform config, and verifies them with a 93-rule static auditor and real Docker builds.</p></details>
+      <details><summary>Does it overwrite my existing Dockerfile?</summary><p>No. Existing deployment files are audited and scored, then fixed in place with your approval. Application code is never changed without asking.</p></details>
+      <details><summary>Do I need Docker installed?</summary><p>Not for generating files or auditing. With Docker installed, vibe-ship also builds and health-checks the result.</p></details>
+      <details><summary>Can I use the auditor without Claude?</summary><p>Yes. Run <code>python3 scripts/audit.py --path .</code> anywhere with Python 3.8+, or use the <code>sudais-khalid/vibe-ship@v2</code> GitHub Action.</p></details>
+      <details><summary>Where can it deploy?</summary><p>Any VPS (Compose + Caddy), Kamal, Fly.io, Render, Railway, Heroku, DigitalOcean App Platform, Google Cloud Run, AWS App Runner and ECS Fargate, Azure Container Apps, and Kubernetes.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    vibe-ship is MIT-licensed open source by <a href="https://sudaiskhalid.com">Sudais Khalid</a>.
+    <a href="https://github.com/sudais-khalid/vibe-ship">Source</a> ·
+    <a href="https://github.com/sudais-khalid/vibe-ship/blob/main/CHANGELOG.md">Changelog</a> ·
+    <a href="https://github.com/sudais-khalid/vibe-ship/blob/main/references/audit-rules.md">Audit rules</a>
+  </footer>
+</div>
+</body>
+</html>

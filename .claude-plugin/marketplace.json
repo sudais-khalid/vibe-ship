@@ -1,13 +1,18 @@
 {
   "name": "vibe-ship",
-  "description": "Marketplace for the vibe-ship plugin: generates and audits production-ready deployment setups (Docker, CI/CD, security, scalability).",
+  "description": "vibe-ship: generate, audit and fix production-ready deployment setups (Docker, Compose, CI/CD, Kubernetes, cloud platforms) for any stack.",
   "owner": {
-    "name": "Sudais Khalid"
+    "name": "Sudais Khalid",
+    "url": "https://sudaiskhalid.com"
   },
   "plugins": [
     {
       "name": "vibe-ship",
-      "source": "."
+      "source": "./",
+      "description": "Dockerize and deploy any app with hardened, audited, build-verified Docker, Compose, CI/CD and Kubernetes configs.",
+      "version": "2.0.0",
+      "category": "devops",
+      "tags": ["docker", "deployment", "ci-cd", "kubernetes", "security"]
     }
   ]
 }
