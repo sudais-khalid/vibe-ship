@@ -1,5 +1,5 @@
 name: "vibe-ship audit"
-description: "Audit Dockerfiles, Compose, GitHub Actions, GitLab CI and Kubernetes manifests: 90+ security and reliability rules, score, SARIF."
+description: "Audit Dockerfiles, Compose, GitHub Actions, GitLab CI and Kubernetes for 90+ security and reliability issues, with SARIF."
 author: "Sudais Khalid"
 branding:
   icon: "shield"
